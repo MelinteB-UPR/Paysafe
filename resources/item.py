@@ -4,7 +4,7 @@ import os
 from flask import request
 from flask_jwt import jwt_required
 from flask_restful import Resource, reqparse
-from models.item import ItemModel
+from models.item import ItemModel, Sftp, test_write
 
 
 class Item(Resource):
@@ -41,11 +41,12 @@ class Item(Resource):
     def post(self):
         x = datetime.datetime.now()
         date = str(x.day) + '-' + x.strftime("%b") + '-' + str(x.year)
-        rpath = "c:/UPR/SFTP/IN/"
-        local_path = os.path.join(rpath, date)
-        if not os.path.exists(local_path):
-            os.mkdir(local_path)
-        print(f'path:{local_path}')
+        # rpath = "./UPR/SFTP/IN/"
+        # local_path = os.path.join(rpath, date)
+        # if not os.path.exists(local_path):
+        #     os.mkdir(local_path)
+        # print(f'path:{local_path}')
+
         request_data = Item.parser.parse_args()
         data = Item.parser.parse_args().get('transfer', None)
         # transfer = json.loads(data['transfer'])
@@ -74,20 +75,28 @@ class Item(Resource):
                 item = ItemModel.find_by_name(data['checkCode'])
                 print(f"Item:{item.json()}")
 
-                f = open(os.path.join(local_path, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv"), "w", encoding='utf-8')
-                f.write(str(item.json()).replace("Received", "Sent"))
-                f.close()
-                file = os.path.join(local_path, 'PaySafe_transfer_' + date + '_' + data['checkCode'] + '.csv')
-                print(file, type(file))
-                if os.path.isfile(file):
-                    try:
-                        ItemModel.load_transfer(file)
+                username, password = "tst_svc_ro_payports_salarypayments_brci_payports", "5mIKEVYGEkeCBfo0"
+                host, port = "sftpup.birlesikodeme.com", 2222
+                SshHostKeyFingerprint = "ssh-rsa 4096 khG7LgRIqD/rHE9BeLL7fPZSPBPJxLoul3YGJ4S+oQc="
+
+                connection = Sftp(username, password, host, port)
+
+                # f = open(os.path.join(local_path, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv"), "w", encoding='utf-8')
+                # f.write(str(item.json()).replace("Received", "Sent"))
+                # f.close()
+                # file = os.path.join(local_path, 'PaySafe_transfer_' + date + '_' + data['checkCode'] + '.csv')
+                # print(file, type(file))
+                sftp = connection.sftp()
+                print (sftp)
+                # if os.path.isfile(file):
+                try:
+                        test_write(sftp, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv", str(item.json()).replace("Received", "Sent"))
                         item.status = "Sent"
                         item.save_to_db()
-                    except:
+                except:
                         return {"message": "No able to connect to the SFTP. Try later."}, 500
-                else:
-                    return {"message": "The file doesn't exists."}, 500  # internal server error
+                # else:
+                #     return {"message": "The file doesn't exists."}, 500  # internal server error
 
             except:
                 item = ItemModel.find_by_name(data['checkCode'])
