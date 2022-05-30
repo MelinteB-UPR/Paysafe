@@ -5,3 +5,4 @@ Flask-SQLAlchemy
 uwsgi
 DateTime==4.4
 cryptography==37.0.2
+paramiko
