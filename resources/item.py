@@ -4,7 +4,7 @@ import os
 from flask import request
 from flask_jwt import jwt_required
 from flask_restful import Resource, reqparse
-from models.item import ItemModel, Sftp, test_write
+from models.item import ItemModel, Sftp, test_write, recursive_ftp
 
 
 class Item(Resource):
@@ -30,7 +30,14 @@ class Item(Resource):
         item = ItemModel.find_by_name(checkCode)
 
         if item:
-            if ItemModel.check_transfer(checkCode):
+            username, password = "tst_svc_ro_payports_salarypayments_brci_payports", "5mIKEVYGEkeCBfo0"
+            host, port = "sftpup.birlesikodeme.com", 2222
+            SshHostKeyFingerprint = "ssh-rsa 4096 khG7LgRIqD/rHE9BeLL7fPZSPBPJxLoul3YGJ4S+oQc="
+
+            connection = Sftp(username, password, host, port)
+            print(recursive_ftp(connection))
+            if checkCode in str(recursive_ftp(connection)):
+
                 item.status = 'Processing'
                 item.save_to_db()
             return item.json()
