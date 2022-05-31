@@ -160,10 +160,10 @@ class Sftp():
         ssh.connect(self.host, self.port, self.username, self.password)
 
         sftp = ssh.open_sftp()
-        files = sftp.listdir_attr(".")
-        for f in files:
-            t = datetime.datetime.fromtimestamp(f.st_mtime).strftime('%Y-%m-%dT%H:%M:%S')
-            print("{}: {} {}".format(f.filename, f.st_size, t))
+        # files = sftp.listdir_attr(".")
+        # for f in files:
+        #     t = datetime.datetime.fromtimestamp(f.st_mtime).strftime('%Y-%m-%dT%H:%M:%S')
+        #     print("{}: {} {}".format(f.filename, f.st_size, t))
         return sftp
 
 
