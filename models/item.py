@@ -1,14 +1,10 @@
-import json
+
 import paramiko
 from collections import defaultdict
 import stat
 import os
 import datetime
-import ast
-import subprocess
-from flask import jsonify
 from db import db
-from sqlalchemy.dialects.postgresql import JSON
 
 
 class ItemModel(db.Model):
@@ -66,25 +62,22 @@ class ItemModel(db.Model):
         # self.device_id = device_id
         self.status = status
 
-
     def json(self):
 
         return {
-
-        "checkCode": self.checkCode,
-        "senderId": "",
-        "senderIBAN": self.senderIBAN,
-        "senderMSISDN": "",
-        "senderName": self.senderName,
-        "receiverId": "",
-        "receiverIBAN": self.receiverIBAN,
-        "receiverMSISDN": "",
-        "receiverName": self.receiverName,
-        "description": self.description,
-        "amount": self.amount,
-        "currencyCode": self.currencyCode,
-        "status": self.status,
-
+            "checkCode": self.checkCode,
+            "senderId": "",
+            "senderIBAN": self.senderIBAN,
+            "senderMSISDN": "",
+            "senderName": self.senderName,
+            "receiverId": "",
+            "receiverIBAN": self.receiverIBAN,
+            "receiverMSISDN": "",
+            "receiverName": self.receiverName,
+            "description": self.description,
+            "amount": self.amount,
+            "currencyCode": self.currencyCode,
+            "status": self.status,
         }
 
     # def load_transfer(file):
@@ -142,14 +135,13 @@ class ItemModel(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-class Sftp(ItemModel):
 
+class Sftp:
     def __init__(self, username, password, host, port):
         self.username = username
         self.password = password
         self.host = host
         self.port = port
-
 
     def sftp(self):
         paramiko.util.log_to_file("paramiko.log")
@@ -174,6 +166,7 @@ class Sftp(ItemModel):
             print("{}: {} {}".format(f.filename, f.st_size, t))
         return sftp
 
+
 def test_write(sftp, file, content):
         """
         verify that a file can be created and written, and the size is correct.
@@ -186,6 +179,7 @@ def test_write(sftp, file, content):
         #     sftp.remove("./out" + "/duck.txt")
         except ValueError:
             raise ValueError("There was an error writing the file on the SFTP.")
+
 
 def recursive_ftp(sftp, path='.', files=None):
         if files is None:
