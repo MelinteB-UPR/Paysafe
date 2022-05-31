@@ -136,7 +136,7 @@ class ItemModel(db.Model):
         db.session.commit()
 
 
-class Sftp:
+class Sftp():
     def __init__(self, username, password, host, port):
         self.username = username
         self.password = password
@@ -172,7 +172,7 @@ def test_write(sftp, file, content):
         verify that a file can be created and written, and the size is correct.
         """
         try:
-            with sftp.open("./out" + file, "w") as f:
+            with sftp.open("./out/" + file, "w") as f:
                 f.write(content)
         # assert sftp.stat("./out" + "/duck.txt").st_size == 1483
         # finally:
@@ -194,3 +194,4 @@ def recursive_ftp(sftp, path='.', files=None):
                 files[path].append(attr.filename)
 
         return files
+

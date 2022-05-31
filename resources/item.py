@@ -94,14 +94,14 @@ class Item(Resource):
                 # file = os.path.join(local_path, 'PaySafe_transfer_' + date + '_' + data['checkCode'] + '.csv')
                 # print(file, type(file))
                 sftp = connection.sftp()
-                print (sftp)
+                print(sftp)
                 # if os.path.isfile(file):
                 try:
-                        test_write(sftp, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv", str(item.json()).replace("Received", "Sent"))
-                        item.status = "Sent"
-                        item.save_to_db()
+                    test_write(sftp, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv", str(item.json()).replace("Received", "Sent"))
+                    item.status = "Sent"
+                    item.save_to_db()
                 except:
-                        return {"message": "No able to connect to the SFTP. Try later."}, 500
+                    return {"message": "No able to connect to the SFTP. Try later."}, 500
                 # else:
                 #     return {"message": "The file doesn't exists."}, 500  # internal server error
 
@@ -144,3 +144,5 @@ class ItemList(Resource):
     def get(self):
         # return {'items': list(map(lambda x: x.json(), ItemModel.query.all()))}
         return {'items': [item.json() for item in ItemModel.query.all()]}
+
+
