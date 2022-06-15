@@ -1,11 +1,11 @@
 import json
 import datetime
 import os
-from flask import request
+from flask import request, session, escape
 from flask_jwt import jwt_required
 from flask_restful import Resource, reqparse
 from models.item import ItemModel, Sftp, test_write, recursive_ftp
-
+from models.user import UserModel
 
 class Item(Resource):
     parser = reqparse.RequestParser()
@@ -25,19 +25,18 @@ class Item(Resource):
     @jwt_required()
     def get(self):
         request_data = Item.parser.parse_args().get("transfer", None)
-
         checkCode = request_data['checkCode']
         item = ItemModel.find_by_name(checkCode)
 
         if item:
-            username, password = "tst_svc_ro_payports_salarypayments_brci_payports", "5mIKEVYGEkeCBfo0"
-            host, port = "sftpup.birlesikodeme.com", 2222
-            SshHostKeyFingerprint = "ssh-rsa 4096 khG7LgRIqD/rHE9BeLL7fPZSPBPJxLoul3YGJ4S+oQc="
+            user = UserModel.find_by_id(1).json()
+            print(user)
+            username, password = user['username'], user['password']
+            host, port = user['host'], user['port']
 
             connection = Sftp(username, password, host, port)
-            print(recursive_ftp(connection))
-            if checkCode in str(recursive_ftp(connection)):
 
+            if checkCode in str(recursive_ftp(connection.sftp())):
                 item.status = 'Processing'
                 item.save_to_db()
             return item.json()
@@ -48,15 +47,9 @@ class Item(Resource):
     def post(self):
         x = datetime.datetime.now()
         date = str(x.day) + '-' + x.strftime("%b") + '-' + str(x.year)
-        # rpath = "./UPR/SFTP/IN/"
-        # local_path = os.path.join(rpath, date)
-        # if not os.path.exists(local_path):
-        #     os.mkdir(local_path)
-        # print(f'path:{local_path}')
 
         request_data = Item.parser.parse_args()
         data = Item.parser.parse_args().get('transfer', None)
-        # transfer = json.loads(data['transfer'])
 
         if ItemModel.find_by_name(data['checkCode']):
             return {'message': "An item with checkCode:'{}' already exists.".format(
@@ -82,46 +75,43 @@ class Item(Resource):
                 item = ItemModel.find_by_name(data['checkCode'])
                 print(f"Item:{item.json()}")
 
-                username, password = "tst_svc_ro_payports_salarypayments_brci_payports", "5mIKEVYGEkeCBfo0"
-                host, port = "sftpup.birlesikodeme.com", 2222
-                SshHostKeyFingerprint = "ssh-rsa 4096 khG7LgRIqD/rHE9BeLL7fPZSPBPJxLoul3YGJ4S+oQc="
-
+                user = UserModel.find_by_id(1).json()
+                print(user)
+                username, password = user['username'], user['password']
+                host, port = user['host'], user['port']
                 connection = Sftp(username, password, host, port)
 
-                # f = open(os.path.join(local_path, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv"), "w", encoding='utf-8')
-                # f.write(str(item.json()).replace("Received", "Sent"))
-                # f.close()
-                # file = os.path.join(local_path, 'PaySafe_transfer_' + date + '_' + data['checkCode'] + '.csv')
-                # print(file, type(file))
                 sftp = connection.sftp()
-                print(sftp)
-                # if os.path.isfile(file):
+
                 try:
                     test_write(sftp, "PaySafe_transfer_"+date+"_"+data['checkCode']+".csv", str(item.json()).replace("Received", "Sent"))
                     item.status = "Sent"
                     item.save_to_db()
-                except:
+                except ValueError:
                     return {"message": "No able to connect to the SFTP. Try later."}, 500
                 # else:
                 #     return {"message": "The file doesn't exists."}, 500  # internal server error
 
-            except:
+            except ValueError:
                 item = ItemModel.find_by_name(data['checkCode'])
                 item.status = "Stiff"
                 item.save_to_db()
                 return {"message": "An error occurred transferring the item to SFTP."}, 500  # internal server error
-        except:
+        except ValueError:
             return {"message": "An error occurred inserting the item."}, 500  # internal server error
 
         return item.json(), 201
 
-    # # @jwt_required()
-    # def delete(self, name):
-    #     item = ItemModel.find_by_name(name)
-    #     if item:
-    #         item.delete_from_db()
-    #
-    #     return {'message': 'Item deleted.'}
+    @jwt_required()
+    def delete(self):
+        request_data = Item.parser.parse_args().get("transfer", None)
+        checkCode = request_data['checkCode']
+        item = ItemModel.find_by_name(checkCode)
+
+        if item:
+            item.delete_from_db()
+
+        return {'message': 'Item deleted.'}
     #
     # # @jwt_required()
     # def put(self, name):

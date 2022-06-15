@@ -8,10 +8,14 @@ class UserModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80))
     password = db.Column(db.String(80))
+    host = db.Column(db.String(80))
+    port = db.Column(db.Integer)
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, host, port):
         self.username = username
         self.password = password
+        self.host = host
+        self.port = port
 
     def save_to_db(self):
         db.session.add(self)
@@ -20,6 +24,14 @@ class UserModel(db.Model):
     def delete_from_db(self):
         db.session.delete(self)
         db.session.commit()
+
+    def json(self):
+        return {
+            "username": self.username,
+            "password": self.password,
+            "host": self.host,
+            "port": self.port,
+        }
 
     @classmethod
     def find_by_username(cls, username):

@@ -20,7 +20,9 @@ app.config["JWT_EXPIRATION_DELTA"] = timedelta(seconds=1800)
 app.secret_key = 'bogdan'
 api = Api(app)
 
-
+# @app.before_first_request
+# def create_table():
+#     db.create_all()
 
 jwt = JWT(app, authenticate, identity)
 
